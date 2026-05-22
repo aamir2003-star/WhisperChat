@@ -1,4 +1,4 @@
-# 💬 WhisperChat — Real-Time WhatsApp Clone with Presence & Live Status Ticks
+# 💬 WhisperChat
 
 WhisperChat is a premium, real-time messaging application designed with a sleek, modern aesthetic and responsive layouts. Built on the robust **MERN Stack** (MongoDB, Express, React, Node.js) and powered by **Socket.io**, it mirrors the signature real-time behaviors of WhatsApp—complete with user presence tracking, instant typing indicators, dynamic relative timestamps, customizable message bubble themes, and live message status ticks (Sent, Delivered, Seen).
 
