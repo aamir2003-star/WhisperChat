@@ -64,3 +64,21 @@ export const allUsers = async (req, res) => {
   const users = await User.find(keyword).find({ _id: { $ne: req.user._id } });
   res.send(users);
 };
+
+// Logout user (explicit DB offline status update and real-time status broadcast)
+export const logoutUser = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const lastSeen = new Date();
+    await User.findByIdAndUpdate(userId, { isOnline: false, lastSeen });
+
+    if (req.io) {
+      req.io.emit("user_status_change", { userId, isOnline: false, lastSeen });
+    }
+
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+

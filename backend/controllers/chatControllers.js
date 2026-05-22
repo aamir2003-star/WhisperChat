@@ -1,5 +1,6 @@
 import Chat from "../models/chatModel.js";
 import User from "../models/userModel.js";
+import Message from "../models/messageModel.js";
 
 export const accessChat = async (req, res) => {
   const { userId } = req.body;
@@ -25,7 +26,16 @@ export const accessChat = async (req, res) => {
   });
 
   if (isChat.length > 0) {
-    res.send(isChat[0]);
+    const chat = isChat[0];
+    const unreadCount = await Message.countDocuments({
+      chat: chat._id,
+      sender: { $ne: req.user._id },
+      readBy: { $ne: req.user._id },
+    });
+    res.send({
+      ...chat.toObject(),
+      unreadCount,
+    });
   } else {
     var chatData = {
       chatName: "sender",
@@ -39,7 +49,10 @@ export const accessChat = async (req, res) => {
         "users",
         "-password"
       );
-      res.status(200).json(FullChat);
+      res.status(200).json({
+        ...FullChat.toObject(),
+        unreadCount: 0,
+      });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
@@ -48,18 +61,33 @@ export const accessChat = async (req, res) => {
 
 export const fetchChats = async (req, res) => {
   try {
-    Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
+    const userId = req.user._id;
+    let chats = await Chat.find({ users: { $elemMatch: { $eq: userId } } })
       .populate("users", "-password")
       .populate("groupAdmin", "-password")
       .populate("latestMessage")
-      .sort({ updatedAt: -1 })
-      .then(async (results) => {
-        results = await User.populate(results, {
-          path: "latestMessage.sender",
-          select: "username pic",
+      .sort({ updatedAt: -1 });
+
+    chats = await User.populate(chats, {
+      path: "latestMessage.sender",
+      select: "username pic",
+    });
+
+    const chatsWithUnread = await Promise.all(
+      chats.map(async (chat) => {
+        const unreadCount = await Message.countDocuments({
+          chat: chat._id,
+          sender: { $ne: userId },
+          readBy: { $ne: userId },
         });
-        res.status(200).send(results);
-      });
+        return {
+          ...chat.toObject(),
+          unreadCount,
+        };
+      })
+    );
+
+    res.status(200).send(chatsWithUnread);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -92,7 +120,10 @@ export const createGroupChat = async (req, res) => {
       .populate("users", "-password")
       .populate("groupAdmin", "-password");
 
-    res.status(200).json(fullGroupChat);
+    res.status(200).json({
+      ...fullGroupChat.toObject(),
+      unreadCount: 0,
+    });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

@@ -1,6 +1,7 @@
 import  { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { ChatState } from "../../context/ChatProvider";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -9,6 +10,7 @@ const Login = () => {
   const [error, setError] = useState(null);
   
   const navigate = useNavigate();
+  const { setUser } = ChatState();
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -31,6 +33,7 @@ const Login = () => {
 
       if (response.ok) {
         localStorage.setItem("userInfo", JSON.stringify(data));
+        setUser(data);
         setLoading(false);
         navigate("/chats");
       } else {

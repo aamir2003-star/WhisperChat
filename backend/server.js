@@ -9,6 +9,7 @@ import chatRoutes from "./routes/chatRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import User from "./models/userModel.js";
 import Message from "./models/messageModel.js";
+import Chat from "./models/chatModel.js";
 
 dotenv.config();
 connectDB();
@@ -18,6 +19,12 @@ const httpServer = createServer(app);
 
 app.use(cors());
 app.use(express.json());
+
+// Inject io to request object for use in controllers
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 app.get("/", (req, res) => {
   res.send("API is running...");
@@ -47,6 +54,33 @@ io.on("connection", (socket) => {
     try {
       await User.findByIdAndUpdate(userData._id, { isOnline: true });
       io.emit("user_status_change", { userId: userData._id, isOnline: true });
+
+      // Mark all unread/undelivered messages for this user as delivered upon setup (going online)
+      const userChats = await Chat.find({ users: userData._id });
+      const chatIds = userChats.map((c) => c._id);
+
+      const undeliveredMessages = await Message.find({
+        chat: { $in: chatIds },
+        sender: { $ne: userData._id },
+        deliveredTo: { $ne: userData._id },
+      });
+
+      if (undeliveredMessages.length > 0) {
+        await Message.updateMany(
+          { _id: { $in: undeliveredMessages.map((m) => m._id) } },
+          { $addToSet: { deliveredTo: userData._id } }
+        );
+
+        // Broadcast dynamic message status updates for real-time double grey ticks
+        undeliveredMessages.forEach((msg) => {
+          io.to(msg.chat.toString()).emit("message_status_update", {
+            messageId: msg._id,
+            chatId: msg.chat,
+            userId: userData._id,
+            status: "delivered",
+          });
+        });
+      }
     } catch (e) {
       console.error("Error updating setup presence:", e);
     }
@@ -130,8 +164,11 @@ io.on("connection", (socket) => {
     if (socket.userId) {
       try {
         const userId = socket.userId;
-        const userSockets = await io.in(userId).local.fetchSockets();
-        if (userSockets.length === 0) {
+        // Find other active sockets for this user synchronously and reliably
+        const activeSockets = Array.from(io.sockets.sockets.values()).filter(
+          (s) => s.userId === userId && s.id !== socket.id
+        );
+        if (activeSockets.length === 0) {
           const lastSeen = new Date();
           await User.findByIdAndUpdate(userId, { isOnline: false, lastSeen });
           io.emit("user_status_change", { userId, isOnline: false, lastSeen });

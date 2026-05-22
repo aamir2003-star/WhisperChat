@@ -27,7 +27,6 @@ const formatMessageTime = (dateString) => {
 };
 
 const MyChats = ({ fetchAgain }) => {
-  const [loggedUser, setLoggedUser] = useState();
   const { selectedChat, setSelectedChat, user, chats, setChats, notification, setNotification } = ChatState();
 
   const fetchChats = async () => {
@@ -45,16 +44,23 @@ const MyChats = ({ fetchAgain }) => {
   };
 
   useEffect(() => {
-    setLoggedUser(JSON.parse(localStorage.getItem("userInfo")));
-    fetchChats();
-  }, [fetchAgain]);
+    if (user) {
+      fetchChats();
+    }
+  }, [fetchAgain, user]);
 
   const getSender = (loggedUser, users) => {
-    return users[0]._id === loggedUser?._id ? users[1].username : users[0].username;
+    if (!users || users.length === 0) return "Unknown User";
+    if (users.length === 1) return users[0]?.username || "Unknown User";
+    return users[0]?._id === loggedUser?._id 
+      ? (users[1]?.username || "Unknown User") 
+      : (users[0]?.username || "Unknown User");
   };
 
   const getSenderFull = (loggedUser, users) => {
-    return users[0]._id === loggedUser?._id ? users[1] : users[0];
+    if (!users || users.length === 0) return {};
+    if (users.length === 1) return users[0] || {};
+    return users[0]?._id === loggedUser?._id ? (users[1] || {}) : (users[0] || {});
   };
 
   return (
@@ -71,12 +77,17 @@ const MyChats = ({ fetchAgain }) => {
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {chats ? (
           chats.map((chat) => {
-            const unreadCount = notification.filter((n) => n.chat._id === chat._id).length;
+            const unreadCount = chat.unreadCount || 0;
             return (
             <div
               onClick={() => {
                 setSelectedChat(chat);
                 setNotification(notification.filter((n) => n.chat._id !== chat._id));
+                setChats((prevChats) =>
+                  prevChats.map((c) =>
+                    c._id === chat._id ? { ...c, unreadCount: 0 } : c
+                  )
+                );
               }}
               className={`cursor-pointer px-4 py-3 rounded-lg transition-colors border flex gap-3 items-center ${
                 selectedChat === chat 
@@ -86,22 +97,22 @@ const MyChats = ({ fetchAgain }) => {
               key={chat._id}
             >
               {!chat.isGroupChat ? (
-                isDefaultAvatar(getSenderFull(loggedUser, chat.users)?.pic) ? (
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 ${selectedChat === chat ? 'bg-primary-foreground/20 text-primary-foreground' : getAvatarColor(getSenderFull(loggedUser, chat.users)?._id)}`}>
-                    {getSenderFull(loggedUser, chat.users)?.username.charAt(0).toUpperCase()}
+                isDefaultAvatar(getSenderFull(user, chat.users)?.pic) ? (
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 ${selectedChat === chat ? 'bg-primary-foreground/20 text-primary-foreground' : getAvatarColor(getSenderFull(user, chat.users)?._id)}`}>
+                    {getSenderFull(user, chat.users)?.username?.charAt(0).toUpperCase() || "?"}
                   </div>
                 ) : (
-                  <img src={getSenderFull(loggedUser, chat.users)?.pic} alt="profile" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                  <img src={getSenderFull(user, chat.users)?.pic} alt="profile" className="w-10 h-10 rounded-full object-cover shrink-0" />
                 )
               ) : (
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 ${selectedChat === chat ? 'bg-primary-foreground/20 text-primary-foreground' : getAvatarColor(chat._id)}`}>
-                  {chat.chatName.charAt(0).toUpperCase()}
+                  {chat.chatName?.charAt(0).toUpperCase() || "?"}
                 </div>
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline">
                   <div className="font-medium truncate">
-                    {!chat.isGroupChat ? getSender(loggedUser, chat.users) : chat.chatName}
+                    {!chat.isGroupChat ? getSender(user, chat.users) : chat.chatName}
                   </div>
                   {chat.latestMessage && (
                     <span className={`text-[10px] shrink-0 ml-2 font-medium ${selectedChat === chat ? "text-primary-foreground/75" : "text-muted-foreground"}`}>

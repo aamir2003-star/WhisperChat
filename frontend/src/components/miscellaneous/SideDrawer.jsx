@@ -29,11 +29,27 @@ const SideDrawer = () => {
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
-  const { user, setSelectedChat, chats, setChats, notification, setNotification } = ChatState();
+  const { user, setUser, setSelectedChat, chats, setChats, notification, setNotification } = ChatState();
   const navigate = useNavigate();
 
-  const logoutHandler = () => {
+  const logoutHandler = async () => {
+    try {
+      if (user?.token) {
+        await fetch("http://localhost:3000/api/user/logout", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Logout API error:", error);
+    }
     localStorage.removeItem("userInfo");
+    setUser(null);
+    setSelectedChat(null);
+    setChats([]);
+    setNotification([]);
     navigate("/");
   };
 

@@ -74,11 +74,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     return localStorage.getItem("chatBubbleTheme") || "blue";
   });
   const messagesEndRef = useRef(null);
+  const prevChatIdRef = useRef(null);
 
   const { user, selectedChat, setSelectedChat, chats, setChats, notification, setNotification } = ChatState();
 
   const getSenderFull = (loggedUser, users) => {
-    return users[0]._id === loggedUser._id ? users[1] : users[0];
+    if (!users || users.length === 0) return {};
+    if (users.length === 1) return users[0] || {};
+    return users[0]?._id === loggedUser?._id ? (users[1] || {}) : (users[0] || {});
   };
 
   const scrollToBottom = () => {
@@ -194,7 +197,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   useEffect(() => {
-    fetchMessages();
+    if (selectedChat) {
+      if (selectedChat._id !== prevChatIdRef.current) {
+        fetchMessages();
+        prevChatIdRef.current = selectedChat._id;
+      }
+    } else {
+      prevChatIdRef.current = null;
+    }
     selectedChatCompare = selectedChat;
     // eslint-disable-next-line
   }, [selectedChat]);
@@ -211,6 +221,36 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           userId: user._id,
         });
 
+        // Instantly update the sidebar list for non-active chats in real-time
+        setChats((prevChats) => {
+          if (!prevChats) return prevChats;
+          const chatExists = prevChats.some((c) => c._id === newMessageRecieved.chat._id);
+          if (!chatExists) {
+            // Construct and prepend new chat dynamically if it doesn't exist in sidebar yet
+            return [{
+              ...newMessageRecieved.chat,
+              latestMessage: newMessageRecieved,
+              unreadCount: 1,
+            }, ...prevChats];
+          }
+          const updatedChats = prevChats.map((c) => {
+            if (c._id === newMessageRecieved.chat._id) {
+              return {
+                ...c,
+                latestMessage: newMessageRecieved,
+                unreadCount: (c.unreadCount || 0) + 1,
+              };
+            }
+            return c;
+          });
+          const chatIndex = updatedChats.findIndex((c) => c._id === newMessageRecieved.chat._id);
+          if (chatIndex > -1) {
+            const [targetedChat] = updatedChats.splice(chatIndex, 1);
+            return [targetedChat, ...updatedChats];
+          }
+          return updatedChats;
+        });
+
         if (!notification.includes(newMessageRecieved)) {
           setNotification([newMessageRecieved, ...notification]);
           setFetchAgain(!fetchAgain);
@@ -220,6 +260,35 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           messageId: newMessageRecieved._id,
           chatId: newMessageRecieved.chat._id,
           userId: user._id,
+        });
+
+        // Instantly update sidebar latest message preview for active chat
+        setChats((prevChats) => {
+          if (!prevChats) return prevChats;
+          const chatExists = prevChats.some((c) => c._id === newMessageRecieved.chat._id);
+          if (!chatExists) {
+            return [{
+              ...newMessageRecieved.chat,
+              latestMessage: newMessageRecieved,
+              unreadCount: 0,
+            }, ...prevChats];
+          }
+          const updatedChats = prevChats.map((c) => {
+            if (c._id === newMessageRecieved.chat._id) {
+              return {
+                ...c,
+                latestMessage: newMessageRecieved,
+                unreadCount: 0,
+              };
+            }
+            return c;
+          });
+          const chatIndex = updatedChats.findIndex((c) => c._id === newMessageRecieved.chat._id);
+          if (chatIndex > -1) {
+            const [targetedChat] = updatedChats.splice(chatIndex, 1);
+            return [targetedChat, ...updatedChats];
+          }
+          return updatedChats;
         });
 
         const updatedMessage = {
@@ -267,6 +336,28 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         const data = await response.json();
         socket.emit("new message", data);
         setMessages([...messages, data]);
+        
+        // Instantly update active chat latest message and move it to top of sidebar
+        setChats((prevChats) => {
+          if (!prevChats) return prevChats;
+          const updatedChats = prevChats.map((c) => {
+            if (c._id === selectedChat._id) {
+              return {
+                ...c,
+                latestMessage: data,
+                unreadCount: 0,
+              };
+            }
+            return c;
+          });
+          const chatIndex = updatedChats.findIndex((c) => c._id === selectedChat._id);
+          if (chatIndex > -1) {
+            const [targetedChat] = updatedChats.splice(chatIndex, 1);
+            return [targetedChat, ...updatedChats];
+          }
+          return updatedChats;
+        });
+
         setFetchAgain(!fetchAgain);
       } catch (error) {
         console.error(error);
@@ -317,17 +408,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               </button>
               {!selectedChat.isGroupChat ? (
                 <div className="flex items-center gap-3">
-                  {isDefaultAvatar(getSenderFull(user, selectedChat.users).pic) ? (
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 ${getAvatarColor(getSenderFull(user, selectedChat.users)._id)}`}>
-                      {getSenderFull(user, selectedChat.users).username.charAt(0).toUpperCase()}
+                  {isDefaultAvatar(getSenderFull(user, selectedChat.users)?.pic) ? (
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 ${getAvatarColor(getSenderFull(user, selectedChat.users)?._id)}`}>
+                      {getSenderFull(user, selectedChat.users)?.username?.charAt(0).toUpperCase() || "?"}
                     </div>
                   ) : (
-                    <img src={getSenderFull(user, selectedChat.users).pic} alt="profile" className="w-10 h-10 rounded-full object-cover shrink-0" />
+                    <img src={getSenderFull(user, selectedChat.users)?.pic} alt="profile" className="w-10 h-10 rounded-full object-cover shrink-0" />
                   )}
                   <div className="flex flex-col">
-                    <span className="font-semibold leading-tight">{getSenderFull(user, selectedChat.users).username}</span>
-                    <span className={`text-[11px] leading-none mt-1 ${getSenderFull(user, selectedChat.users).isOnline ? "text-emerald-500 font-medium" : "text-muted-foreground"}`}>
-                      {getSenderFull(user, selectedChat.users).isOnline ? "online" : formatLastSeen(getSenderFull(user, selectedChat.users).lastSeen)}
+                    <span className="font-semibold leading-tight">{getSenderFull(user, selectedChat.users)?.username || "Unknown"}</span>
+                    <span className={`text-[11px] leading-none mt-1 ${getSenderFull(user, selectedChat.users)?.isOnline ? "text-emerald-500 font-medium" : "text-muted-foreground"}`}>
+                      {getSenderFull(user, selectedChat.users)?.isOnline ? "online" : formatLastSeen(getSenderFull(user, selectedChat.users)?.lastSeen)}
                     </span>
                   </div>
                 </div>
