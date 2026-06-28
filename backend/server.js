@@ -17,12 +17,7 @@ connectDB();
 const app = express();
 const httpServer = createServer(app);
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "*",
-    credentials: true,
-  })
-);
+app.use(cors());
 app.use(express.json());
 
 // Inject io to request object for use in controllers
