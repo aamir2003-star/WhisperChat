@@ -3,8 +3,9 @@ import { ChatState } from "../context/ChatProvider";
 import { ArrowLeft, Send, Check, CheckCheck } from "lucide-react";
 import io from "socket.io-client";
 import { isDefaultAvatar, getAvatarColor } from "../utils/avatarUtils";
+import { API_URL } from "../config";
 
-const ENDPOINT = "http://localhost:3000";
+const ENDPOINT = API_URL;
 let socket, selectedChatCompare;
 
 const formatLastSeen = (lastSeenDate) => {
@@ -180,7 +181,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/api/message/${selectedChat._id}`, {
+      const response = await fetch(`${API_URL}/api/message/${selectedChat._id}`, {
         headers: {
           Authorization: `Bearer ${user.token}`,
         },
@@ -321,7 +322,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         const messageToSend = newMessage;
         setNewMessage("");
 
-        const response = await fetch("http://localhost:3000/api/message", {
+        const response = await fetch(`${API_URL}/api/message`, {
           method: "POST",
           headers: {
             "Content-type": "application/json",

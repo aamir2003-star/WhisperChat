@@ -2,6 +2,7 @@ import  { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { ChatState } from "../../context/ChatProvider";
+import { API_URL } from "../../config";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -23,7 +24,7 @@ const Login = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/user/login", {
+      const response = await fetch(`${API_URL}/api/user/login`, {
         method: "POST",
         headers: { "Content-type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -37,7 +38,7 @@ const Login = () => {
         setLoading(false);
         navigate("/chats");
       } else {
-        setError(data.message || "Invalid credentials");
+        setError(data.message || "Incorrect username or password");
         setLoading(false);
       }
     } catch (error) {
@@ -87,7 +88,7 @@ const Login = () => {
         }}
         className="w-full bg-white/10 hover:bg-white/20 text-white font-medium py-2.5 rounded-lg transition-all border border-white/10"
       >
-        Get Guest User Credentials
+        Try Guest Account
       </button>
     </form>
   );

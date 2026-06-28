@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, Bell, LogOut, X, Moon, Sun } from "lucide-react";
 import { isDefaultAvatar, getAvatarColor } from "../../utils/avatarUtils";
 import useDebounce from "../../hooks/useDebounce";
+import { API_URL } from "../../config";
 
 const SideDrawer = () => {
   const [search, setSearch] = useState("");
@@ -35,7 +36,7 @@ const SideDrawer = () => {
   const logoutHandler = async () => {
     try {
       if (user?.token) {
-        await fetch("http://localhost:3000/api/user/logout", {
+        await fetch(`${API_URL}/api/user/logout`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${user.token}`,
@@ -61,7 +62,7 @@ const SideDrawer = () => {
       }
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:3000/api/user?search=${debouncedSearch}`, {
+        const response = await fetch(`${API_URL}/api/user?search=${debouncedSearch}`, {
           headers: {
             Authorization: `Bearer ${user.token}`,
           },
@@ -80,7 +81,7 @@ const SideDrawer = () => {
   const accessChat = async (userId) => {
     try {
       setLoadingChat(true);
-      const response = await fetch("http://localhost:3000/api/chat", {
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: {
           "Content-type": "application/json",

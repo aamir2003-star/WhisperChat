@@ -3,6 +3,7 @@ import { ChatState } from "../context/ChatProvider";
 import GroupChatModal from "./miscellaneous/GroupChatModal";
 import { Plus } from "lucide-react";
 import { isDefaultAvatar, getAvatarColor } from "../utils/avatarUtils";
+import { API_URL } from "../config";
 
 const formatMessageTime = (dateString) => {
   if (!dateString) return "";
@@ -31,7 +32,7 @@ const MyChats = ({ fetchAgain }) => {
 
   const fetchChats = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/chat", {
+      const response = await fetch(`${API_URL}/api/chat`, {
         headers: {
           Authorization: `Bearer ${user.token}`,
         },

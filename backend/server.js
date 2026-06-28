@@ -17,7 +17,12 @@ connectDB();
 const app = express();
 const httpServer = createServer(app);
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "*",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Inject io to request object for use in controllers
@@ -38,7 +43,8 @@ const PORT = process.env.PORT || 3000;
 
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // In production, restrict this to the frontend URL
+    origin: process.env.FRONTEND_URL || "*",
+    methods: ["GET", "POST"],
   },
 });
 

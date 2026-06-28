@@ -3,6 +3,7 @@ import { ChatState } from "../../context/ChatProvider";
 import { X } from "lucide-react";
 import { isDefaultAvatar, getAvatarColor } from "../../utils/avatarUtils";
 import useDebounce from "../../hooks/useDebounce";
+import { API_URL } from "../../config";
 
 const GroupChatModal = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +25,7 @@ const GroupChatModal = ({ children }) => {
 
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:3000/api/user?search=${debouncedSearch}`, {
+        const response = await fetch(`${API_URL}/api/user?search=${debouncedSearch}`, {
           headers: {
             Authorization: `Bearer ${user.token}`,
           },
@@ -46,7 +47,7 @@ const GroupChatModal = ({ children }) => {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/chat/group`, {
+      const response = await fetch(`${API_URL}/api/chat/group`, {
         method: "POST",
         headers: {
           "Content-type": "application/json",

@@ -2,6 +2,7 @@ import  { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { ChatState } from "../../context/ChatProvider";
+import { API_URL } from "../../config";
 
 const Signup = () => {
   const [username, setUsername] = useState("");
@@ -24,7 +25,7 @@ const Signup = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/user", {
+      const response = await fetch(`${API_URL}/api/user`, {
         method: "POST",
         headers: { "Content-type": "application/json" },
         body: JSON.stringify({ username, password, pic }),
@@ -38,7 +39,7 @@ const Signup = () => {
         setLoading(false);
         navigate("/chats");
       } else {
-        setError(data.message || "Registration failed");
+        setError(data.message || "Failed to create account. Please try a different username.");
         setLoading(false);
       }
     } catch (error) {
@@ -73,11 +74,11 @@ const Signup = () => {
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm text-white/80 font-medium">Profile Picture URL (Optional)</label>
+        <label className="text-sm text-white/80 font-medium">Profile Picture Link (Optional)</label>
         <input
           type="text"
           className="w-full bg-black/20 border border-white/10 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder-white/40 transition-all"
-          placeholder="https://..."
+          placeholder="Paste a link to your picture"
           value={pic}
           onChange={(e) => setPic(e.target.value)}
         />
