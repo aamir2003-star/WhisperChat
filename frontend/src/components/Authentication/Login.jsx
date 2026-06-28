@@ -42,7 +42,8 @@ const Login = () => {
         setLoading(false);
       }
     } catch (error) {
-      setError("Error Occurred! Please try again.", error.message);
+      console.error("Login error details:", error);
+      setError(`Error Occurred! ${error.message || "Please try again."}`);
       setLoading(false);
     }
   };

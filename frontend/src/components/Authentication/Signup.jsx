@@ -43,7 +43,8 @@ const Signup = () => {
         setLoading(false);
       }
     } catch (error) {
-      setError("Error Occurred! Please try again.",error.message);
+      console.error("Signup error details:", error);
+      setError(`Error Occurred! ${error.message || "Please try again."}`);
       setLoading(false);
     }
   };
