@@ -71,7 +71,7 @@ const HomePage = () => {
       </header>
 
       {/* Section 1: Hero Section */}
-      <section className="relative max-w-7xl mx-auto px-6 pt-10 pb-20 md:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center min-h-[calc(100vh-64px)]">
+      <section className="relative max-w-7xl mx-auto px-6 pt-24 pb-20 md:pt-28 md:pb-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center min-h-[calc(100vh-64px)]">
         <div className="lg:col-span-7 flex flex-col justify-center space-y-6 text-left">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold tracking-wide w-fit">
             <Shield className="w-3.5 h-3.5" />
@@ -120,7 +120,7 @@ const HomePage = () => {
         </div>
         
         {/* Right Column: Chat UI Mockup */}
-        <div className="lg:col-span-5 w-full flex justify-center lg:justify-end">
+        <div className="lg:col-span-5 w-full flex justify-center lg:justify-end mt-8 lg:mt-0">
           <div className="w-full max-w-[380px] bg-[#111b21] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[460px] relative select-none">
             {/* Mockup Header */}
             <div className="bg-[#202c33] px-4 py-3 flex items-center justify-between border-b border-white/5">
